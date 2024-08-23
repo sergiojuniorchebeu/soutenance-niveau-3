@@ -1,63 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:projetsout/AppWidget.dart';
 
-class AdminDashboardPage extends StatelessWidget {
-  const AdminDashboardPage({super.key});
+import 'Gestion Annonces.dart';
+import 'Gestion Utilisateur.dart';
+import 'Notifications.dart';
+
+class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            DashboardCard(
-              icon: Icons.manage_accounts,
-              title: 'Manage User Accounts',
-              onPressed: () {
-                // Navigate to Manage User Accounts Page
-              },
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+         title: Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Text('Pharmacare',
+                 style: Appwidget.styledetexte(
+                     couleur: Colors.white,
+                     taille: 20,
+                     w: FontWeight.bold)),
+             const SizedBox(width: 10,),
+             Image.asset(
+               "assets/img/pharmacie (1).png",
+               height: 40,
+             )
+           ],
+         ),
+          bottom: TabBar(
+            labelStyle: Appwidget.styledetexte(
+              couleur: Colors.white, w: FontWeight.bold
             ),
-            DashboardCard(
-              icon: Icons.announcement,
-              title: 'Publish Announcements',
-              onPressed: () {
-                // Navigate to Publish Announcements Page
-              },
-            ),
-            DashboardCard(
-              icon: Icons.settings,
-              title: 'Settings',
-              onPressed: () {
-                // Navigate to Settings Page
-              },
-            ),
-          ],
+            tabs: const [
+              Tab(text: 'Gestion Utilisateur',),
+              Tab(text: 'Gestion Annonces'),
+              Tab(text: 'Notifications'),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class DashboardCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onPressed;
-
-  const DashboardCard({required this.icon, required this.title, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onPressed,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        body: const TabBarView(
           children: [
-            Icon(icon, size: 50),
-            Text(title),
+            UserManagementPage(),
+            AnnouncementManagementPage(),
+            NotificationPageAdmin(),
           ],
         ),
       ),

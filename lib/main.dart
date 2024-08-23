@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Landing%20Page.dart';
 import 'AppWidget.dart';
 import 'New Ui and app/New UI/Admin/HomePage.dart';
+import 'New Ui and app/New UI/Admin/Landing Page Admin.dart';
+import 'New Ui and app/New UI/Pharmacies/Home Page.dart';
 import 'New Ui and app/New UI/Pharmacies/Landing pharmacies.dart';
 
 
@@ -37,7 +39,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const AdminDashboardPage(),
+        '/': (context) =>  const LoginAdmin(),
         //'/seConnecter': (context) => LoginPage(),
       },
     );
