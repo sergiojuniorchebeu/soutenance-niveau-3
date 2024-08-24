@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "932909614033",
+    "project_id": "soutenance3-217dd",
+    "storage_bucket": "soutenance3-217dd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:932909614033:android:bf0e94ba53564db3e216f0",
+        "android_client_info": {
+          "package_name": "com.example.projetsout"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfy0dvoBus3wlFbqtNII2Z9ReCfFsGEJU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
