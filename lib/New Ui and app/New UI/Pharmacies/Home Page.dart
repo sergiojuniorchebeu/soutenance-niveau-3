@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:projetsout/AppWidget.dart';
-
 import 'Assistance IA.dart';
 import 'Gestion Commande.dart';
 import 'Gestion liste produit.dart';
@@ -45,7 +44,7 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.support,
                     title: 'Assistance IA',
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>const AssistanceAIPage()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>const ChatGPTInterface()));
                     },
                   ),
                   DashboardCard(

@@ -17,7 +17,7 @@ class LandingPage extends StatelessWidget {
           IconButton(
               onPressed: (){
             Navigator.push(context, MaterialPageRoute(builder: (context)=> OnboardingScreen()));
-          }, icon: Icon(CupertinoIcons.info_circle_fill, color: Appwidget.customGreen, size: 24,))
+          }, icon: const Icon(CupertinoIcons.info_circle_fill, color: Appwidget.customGreen, size: 24,))
         ],
       ),
       backgroundColor: Colors.grey[200],

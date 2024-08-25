@@ -1,77 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
 
-import 'Home Page.dart';
-
-class AssistanceAIPage extends StatefulWidget {
-  const AssistanceAIPage({super.key});
+class ChatGPTInterface extends StatefulWidget {
+  const ChatGPTInterface({super.key});
 
   @override
-  _AssistanceAIPageState createState() => _AssistanceAIPageState();
+  _ChatGPTInterfaceState createState() => _ChatGPTInterfaceState();
 }
 
-class _AssistanceAIPageState extends State<AssistanceAIPage> {
+class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
   final TextEditingController _controller = TextEditingController();
-  String _response = '';
+  final List<String> _messages = [];
 
-  void _askQuestion() {
-    setState(() {
-      // Logique pour générer une réponse IA
-      _response = 'Réponse de l\'IA pour: "${_controller.text}"';
-      _controller.clear();
-    });
+  void _sendMessage() {
+    if (_controller.text.isNotEmpty) {
+      setState(() {
+        _messages.add(_controller.text);
+        _controller.clear();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Appwidget.appBar(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: <Widget>[
-              const Text(
-                'Assistance par l\'IA',
-                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-              const SizedBox(height: 16.0),
-              const VisitorChart(), // Le graphe des visiteurs
-              const SizedBox(height: 16.0),
-              TextField(
-                maxLines: 3,
-                controller: _controller,
-                decoration: InputDecoration(
-                  labelText: 'Posez votre question',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed:_askQuestion,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Appwidget.customGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  'Envoyer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                _response,
-                style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.normal, color: Colors.black87),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Pharmacare Gemini',
+                style: Appwidget.styledetexte(
+                    couleur: Colors.white,
+                    taille: 20,
+                    w: FontWeight.bold)),
+            const SizedBox(width: 10,),
+            Image.asset(
+              "assets/img/pharmacie (1).png",
+              height: 40,
+            )
+          ],
         ),
+        backgroundColor: Appwidget.customGreen,
+      ),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(10.0),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 5.0),
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Text(_messages[index]),
+                  ),
+                );
+              },
+            ),
+          ),
+          const Divider(height: 1.0),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextField(
+                    maxLines: 3,
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Entrez un message...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, size: 40,),
+                  onPressed: _sendMessage,
+                  color: Appwidget.customGreen,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

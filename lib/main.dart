@@ -7,6 +7,7 @@ import 'AppWidget.dart';
 import 'New Ui and app/New UI/Admin/HomePage.dart';
 import 'New Ui and app/New UI/Admin/Landing Page Admin.dart';
 import 'New Ui and app/New UI/Patient/Home Page patient.dart';
+import 'New Ui and app/New UI/Pharmacies/Assistance IA.dart';
 import 'New Ui and app/New UI/Pharmacies/Home Page.dart';
 import 'New Ui and app/New UI/Pharmacies/Landing pharmacies.dart';
 
@@ -47,7 +48,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) =>  LandingUserPage(),
+        '/': (context) =>  const ChatGPTInterface(),
         //'/seConnecter': (context) => LoginPage(),
       },
     );
