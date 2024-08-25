@@ -1,13 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Landing%20Page.dart';
-import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Patient/Landing%20Page.dart';
 import 'package:projetsout/firebase_options.dart';
 import 'AppWidget.dart';
 import 'New Ui and app/New UI/Admin/HomePage.dart';
 import 'New Ui and app/New UI/Admin/Landing Page Admin.dart';
 import 'New Ui and app/New UI/Patient/Home Page patient.dart';
-import 'New Ui and app/New UI/Pharmacies/Assistance IA.dart';
 import 'New Ui and app/New UI/Pharmacies/Home Page.dart';
 import 'New Ui and app/New UI/Pharmacies/Landing pharmacies.dart';
 
@@ -48,7 +46,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) =>  const ChatGPTInterface(),
+        '/': (context) =>  LoginAdmin(),
         //'/seConnecter': (context) => LoginPage(),
       },
     );
