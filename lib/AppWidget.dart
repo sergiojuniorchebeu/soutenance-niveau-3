@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class Appwidget {
   static const Color customGreen = Color(0xFF009966);
@@ -89,5 +90,9 @@ class Appwidget {
         ],
       ),
     );
+  }
+  static loading(){
+    return const SpinKitRing(
+        color: customGreen);
   }
 }
