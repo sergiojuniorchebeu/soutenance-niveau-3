@@ -132,10 +132,10 @@ class DashboardPatient extends StatelessWidget {
                       ),
                       actions: <Widget>[
                         TextButton(
-                          child: const Text('Annuler',
-                              style: TextStyle(
-                                  fontFamily: "Poppins",
-                                  color: Colors.blueAccent)),
+                          child: Text('Annuler',
+                              style:Appwidget.styledetexte(
+                                couleur: Appwidget.customGreen,
+                              )),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
