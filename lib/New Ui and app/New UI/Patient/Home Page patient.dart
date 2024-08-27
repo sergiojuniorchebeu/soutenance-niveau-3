@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:projetsout/App%20Services/Auth%20Services.dart';
+import 'package:projetsout/App%20Services/Recup%C3%A9ration%20des%20ID.dart';
 import '../../../AppWidget.dart';
 import 'Historique des commandes.dart';
 import 'Notifications patient.dart';
@@ -11,6 +13,9 @@ class DashboardPatient extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    IDRecup idRecup= IDRecup();
+    AuthService authService= AuthService();
+
     return Scaffold(
       appBar: Appwidget.appBar(),
       drawer: Drawer(
@@ -22,23 +27,31 @@ class DashboardPatient extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: Appwidget.customGreen,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Center(child: Icon(CupertinoIcons.person, color: Colors.white,size: 60,)),
-                  const SizedBox(height: 10,),
-                  Text('Sergio Junior Chebeu',
-                      style: Appwidget.styledetexte(
-                          couleur: Colors.white,
-                          w: FontWeight.bold,
-                          taille: 22)),
-                  Text('Yaounde',
-                      style: Appwidget.styledetexte(
-                          couleur: Colors.white,
-                          w: FontWeight.bold,
-                          taille: 18)),
-                ],
+              child: FutureBuilder<String?>(
+                future: idRecup.getUserName(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Appwidget.loadingblanc();
+                  } else if (snapshot.hasError) {
+                    return const Text('//');
+                  } else if (!snapshot.hasData) {
+                    return const Text('User name not found');
+                  } else {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Center(child: Icon(CupertinoIcons.person, color: Colors.white, size: 60)),
+                        const SizedBox(height: 10),
+                        Text(snapshot.data!,
+                            style: Appwidget.styledetexte(
+                                couleur: Colors.white,
+                                w: FontWeight.bold,
+                                taille: 22)),
+                      ],
+                    );
+                  }
+                },
               ),
             ),
             ListTile(
@@ -50,7 +63,10 @@ class DashboardPatient extends StatelessWidget {
                   style: Appwidget.styledetexte(
                       couleur: Colors.black, w: FontWeight.bold, taille: 18)),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>const ProfilePatient()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ProfilePatient()));
               },
             ),
             ListTile(
@@ -62,7 +78,10 @@ class DashboardPatient extends StatelessWidget {
                   style: Appwidget.styledetexte(
                       couleur: Colors.black, w: FontWeight.bold, taille: 18)),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>const NavBarPharmacy()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const NavBarPharmacy()));
               },
             ),
             ListTile(
@@ -70,14 +89,14 @@ class DashboardPatient extends StatelessWidget {
                 Icons.history,
                 color: Appwidget.customGreen,
               ),
-              title: Text(
-                  'Historiques Commandes',
-                  style:  Appwidget.styledetexte(
-                      couleur: Colors.black,
-                      w: FontWeight.bold,
-                      taille: 18)),
+              title: Text('Historiques Commandes',
+                  style: Appwidget.styledetexte(
+                      couleur: Colors.black, w: FontWeight.bold, taille: 18)),
               onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>const OrderHistoryPage()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const OrderHistoryPage()));
               },
             ),
             ListTile(
@@ -89,7 +108,10 @@ class DashboardPatient extends StatelessWidget {
                   style: Appwidget.styledetexte(
                       couleur: Colors.black, w: FontWeight.bold, taille: 18)),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>const NotificationsPatient()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const NotificationsPatient()));
               },
             ),
             ListTile(
@@ -97,23 +119,16 @@ class DashboardPatient extends StatelessWidget {
                 Icons.info_outline,
                 color: Appwidget.customGreen,
               ),
-              title: Text(
-                'Aide',
-                style:  Appwidget.styledetexte(
-                    couleur: Colors.black,
-                    w: FontWeight.bold,
-                    taille: 18)),
+              title: Text('Aide',
+                  style: Appwidget.styledetexte(
+                      couleur: Colors.black, w: FontWeight.bold, taille: 18)),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: Colors.red),
-              title: Text(
-                'Déconnexion',
-                style:Appwidget.styledetexte(
-                    couleur: Colors.red,
-                    w: FontWeight.bold,
-                    taille: 18)
-              ),
+              title: Text('Déconnexion',
+                  style: Appwidget.styledetexte(
+                      couleur: Colors.red, w: FontWeight.bold, taille: 18)),
               onTap: () {
                 showDialog(
                   context: context,
@@ -133,7 +148,7 @@ class DashboardPatient extends StatelessWidget {
                       actions: <Widget>[
                         TextButton(
                           child: Text('Annuler',
-                              style:Appwidget.styledetexte(
+                              style: Appwidget.styledetexte(
                                 couleur: Appwidget.customGreen,
                               )),
                           onPressed: () {
@@ -144,7 +159,9 @@ class DashboardPatient extends StatelessWidget {
                           child: const Text('Déconnexion',
                               style: TextStyle(
                                   fontFamily: "Poppins", color: Colors.red)),
-                          onPressed: () {},
+                          onPressed: () {
+                            authService.signOutUser(context);
+                          },
                         ),
                       ],
                     );
@@ -161,27 +178,24 @@ class DashboardPatient extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Bonjour M Sergio',
-                  style: Appwidget.styledetexte(
-                      taille: 25,
-                      w: FontWeight.bold,
-                      couleur: Appwidget.customGreen)),
-              const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.only(top: 20.0),
                 child: TextField(
                   decoration: InputDecoration(
                     labelText: 'Rechercher',
-                    prefixIcon: const Icon(CupertinoIcons.search, color: Appwidget.customGreen,),
+                    prefixIcon: const Icon(
+                      CupertinoIcons.search,
+                      color: Appwidget.customGreen,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18.0),
-                      borderSide: const BorderSide(color: Appwidget.customGreen),
+                      borderSide:
+                          const BorderSide(color: Appwidget.customGreen),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10.0, horizontal: 20.0),
                   ),
-                  onChanged: (value) {
-
-                  },
+                  onChanged: (value) {},
                 ),
               ),
               const SizedBox(height: 16),

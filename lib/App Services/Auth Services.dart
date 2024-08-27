@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
+import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Patient/Landing%20Page.dart';
 import '../New Ui and app/New UI/Patient/Screen Manage Patient.dart';
 
 class AuthService {
@@ -107,4 +108,49 @@ class AuthService {
   void togglePasswordVisibility() {
     isPasswordVisible = !isPasswordVisible;
   }
+
+  Future<void> signOutUser(BuildContext context) async {
+    try {
+      // Show a loading dialog for 5 seconds
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Row(
+              children: [
+                const Text("Déconnexion en cours..."),
+                const SizedBox(width: 10),
+                Appwidget.loading(),
+              ],
+            ),
+          );
+        },
+      );
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await _auth.signOut();
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Déconnecté avec succès!')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LandingUserPage()),
+      );
+
+    } catch (e) {
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la déconnexion: ${e.toString()}')),
+      );
+    }
+  }
 }
+

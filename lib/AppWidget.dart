@@ -95,4 +95,8 @@ class Appwidget {
     return const SpinKitRing(
         color: customGreen);
   }
+  static loadingblanc(){
+    return const SpinKitRing(
+        color: Colors.white);
+  }
 }
