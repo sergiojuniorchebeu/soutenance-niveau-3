@@ -170,16 +170,6 @@ class _InscriptionPatientState extends State<InscriptionPatient> {
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Icon(CupertinoIcons.lock),
                 ),
-                suffix: IconButton(
-                  icon: Icon(_authService.isPasswordVisible
-                      ? CupertinoIcons.eye
-                      : CupertinoIcons.eye_slash),
-                  onPressed: () {
-                    setState(() {
-                      _authService.togglePasswordVisibility();
-                    });
-                  },
-                ),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: CupertinoColors.systemGrey,
@@ -194,7 +184,7 @@ class _InscriptionPatientState extends State<InscriptionPatient> {
                   padding: const EdgeInsets.only(bottom: 16.0),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red, fontSize: 16),
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 ),
               isLoading

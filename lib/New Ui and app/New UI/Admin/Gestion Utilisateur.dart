@@ -23,9 +23,19 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
       appBar: AppBar(
         //backgroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
+          Expanded(
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Rechercher...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.account_circle),

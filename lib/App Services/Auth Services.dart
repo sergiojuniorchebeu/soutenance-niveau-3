@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
 import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Patient/Landing%20Page.dart';
+import '../New Ui and app/New UI/Admin/HomePage.dart';
 import '../New Ui and app/New UI/Patient/Screen Manage Patient.dart';
 
 class AuthService {
@@ -24,7 +25,6 @@ class AuthService {
         email: email,
         password: password,
       );
-
       User? user = userCredential.user;
 
       if (user != null) {
@@ -104,6 +104,59 @@ class AuthService {
     }
   }
 
+  //Connexion admin
+  Future<void> signInWithEmailAndPasswordadmin({
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connexion en cours...')),
+      );
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = userCredential.user;
+
+      if (user != null) {
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          String role = userDoc.get('Rôle');
+          if (role == 'Admin') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  backgroundColor: Colors.grey[300],
+                  content: Text('Connexion réussie!', style: Appwidget.styledetexte(
+                      couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
+                  ),)),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Erreur: Vous n\'êtes pas un Administrateur.')),
+            );
+            await _auth.signOut();
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erreur: Utilisateur non trouvé.')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: ${e.toString()}')),
+      );
+    }
+  }
+
   bool isPasswordVisible = false;
   void togglePasswordVisibility() {
     isPasswordVisible = !isPasswordVisible;
@@ -144,7 +197,6 @@ class AuthService {
       );
 
     } catch (e) {
-
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
