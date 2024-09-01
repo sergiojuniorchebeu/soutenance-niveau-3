@@ -21,7 +21,8 @@ class AdminDashboard extends StatelessWidget {
                  style: Appwidget.styledetexte(
                      couleur: Colors.white,
                      taille: 20,
-                     w: FontWeight.bold)),
+                     w: FontWeight.bold)
+             ),
              const SizedBox(width: 10,),
              Image.asset(
                "assets/img/pharmacie (1).png",

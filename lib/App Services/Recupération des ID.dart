@@ -18,4 +18,27 @@ class IDRecup {
     }
     return null;
   }
+
+  Future<String?> getAdminName() async {
+    User? user = _auth.currentUser;
+
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          if (userDoc['role'] == 'admin') {
+            return userDoc['name'];
+          }
+        }
+      } catch (e) {
+        print('Erreur lors de la récupération des informations de l\'utilisateur: $e');
+      }
+    }
+
+    return null;
+  }
 }

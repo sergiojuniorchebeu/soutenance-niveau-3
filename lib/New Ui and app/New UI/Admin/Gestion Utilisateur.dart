@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:projetsout/App%20Services/Recup%C3%A9ration%20des%20ID.dart';
 import 'package:projetsout/AppWidget.dart';
+
+import 'Ajout Pharmacies.dart';
+
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -10,23 +14,34 @@ class UserManagementPage extends StatefulWidget {
 
 class _UserManagementPageState extends State<UserManagementPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final IDRecup _idRecup = IDRecup();
+
+  String? _adminName;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fetchAdminName();
+  }
+
+  Future<void> _fetchAdminName() async {
+    String? adminName = await _idRecup.getAdminName();
+    setState(() {
+      _adminName = adminName;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //backgroundColor: Colors.white,
         actions: [
-          Expanded(
+          SizedBox(
+            width: 300,
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Rechercher...',
+                hintText: 'Search...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -37,9 +52,25 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () {},
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  // Notification logic here
+                },
+              ),
+              const SizedBox(width: 8),
+              const CircleAvatar(
+                backgroundImage: AssetImage('aassets/img/admin.png'),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _adminName ?? "Chargement",
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+            ],
           ),
         ],
         bottom: TabBar(
@@ -48,9 +79,9 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
           ),
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Tout'),
+            Tab(text: 'All'),
             Tab(text: 'Pharmacies'),
-            Tab(text: 'Patient'),
+            Tab(text: 'Patients'),
           ],
         ),
       ),
@@ -61,16 +92,16 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildUserList(context, 'Tout les Users'),
+                _buildUserList(context, 'All Users'),
                 _buildUserList(context, 'Pharmacies'),
-                _buildUserList(context, 'Patient'),
+                _buildUserList(context, 'Patients'),
               ],
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddUserDialog(context),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>PharmacyForm())),
         backgroundColor: Appwidget.customGreen,
         child: const Icon(Icons.add),
       ),
@@ -79,19 +110,20 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
 
   Widget _buildSidebar() {
     return Container(
-      width: 200,
+      width: 250,
       color: Colors.grey[200],
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const DrawerHeader(
             child: Text(
-              'Admin Pannel',
+              'Admin Panel',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
           _buildSidebarItem(Icons.dashboard, 'Dashboard'),
           _buildSidebarItem(Icons.person, 'User Management', isActive: true),
-          //_buildSidebarItem(Icons.announcement, 'Announcements'),
+          _buildSidebarItem(Icons.notifications, 'Announcements'),
           _buildSidebarItem(Icons.settings, 'Settings'),
         ],
       ),
@@ -105,7 +137,9 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
         title,
         style: TextStyle(color: isActive ? Colors.green[800] : Colors.black),
       ),
-      onTap: () {},
+      onTap: () {
+        // Handle navigation
+      },
     );
   }
 
@@ -121,17 +155,22 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: ListView.builder(
-              itemCount: 10, // Replace with dynamic user count
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    leading: const Icon(Icons.person),
-                    title: Text('User $index'),
-                    subtitle: Text('user$index@example.com'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+            child: DataTable(
+              columns: const [
+                DataColumn(label: Text('Name')),
+                DataColumn(label: Text('Email')),
+                DataColumn(label: Text('Role')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Actions')),
+              ],
+              rows: List.generate(10, (index) {
+                return DataRow(cells: [
+                  DataCell(Text('User $index')),
+                  DataCell(Text('user$index@example.com')),
+                  DataCell(Text('Role')),
+                  DataCell(Text('Active')),
+                  DataCell(
+                    Row(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
@@ -144,8 +183,8 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                       ],
                     ),
                   ),
-                );
-              },
+                ]);
+              }),
             ),
           ),
         ],
@@ -153,32 +192,6 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     );
   }
 
-  void _showAddUserDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add New User'),
-          content: _buildUserForm(),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text('Add User'),
-              onPressed: () {
-                // Add user logic here
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showEditUserDialog(BuildContext context, String userName) {
     showDialog(
@@ -245,14 +258,14 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
           ),
         ),
         TextFormField(
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Email',
             hintText: 'Enter user email',
           ),
         ),
         const SizedBox(height: 16),
         SwitchListTile(
-          title: Text('Active'),
+          title: const Text('Active'),
           value: true, // Replace with actual status
           onChanged: (bool value) {},
         ),

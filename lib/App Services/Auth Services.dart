@@ -37,7 +37,9 @@ class AuthService {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Compte créé avec succès!')),
+          const SnackBar(content: Text('Compte créé avec succès!', style: TextStyle(
+            color: Colors.green
+          ),)),
         );
         Navigator.pushReplacement(
           context,
@@ -46,7 +48,7 @@ class AuthService {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
+        const SnackBar(content: Text('Erreur veuillez réssayer')),
       );
     }
   }
@@ -76,18 +78,17 @@ class AuthService {
           if (role == 'Patient') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  backgroundColor: Colors.grey[300],
                   content: Text('Connexion réussie!', style: Appwidget.styledetexte(
-                    couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
+                      couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
                   ),)),
             );
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const NavigationPatient()),
+              MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Erreur: Vous n\'êtes pas un patient.')),
+              const SnackBar(content: Text('Identifiant Incorrect')),
             );
             await _auth.signOut();
           }
@@ -99,7 +100,9 @@ class AuthService {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
+        SnackBar(content: Text("Quelque chose s'est mal passé", style: Appwidget.styledetexte(
+            couleur: Colors.red
+        ),)),
       );
     }
   }
@@ -129,7 +132,6 @@ class AuthService {
           if (role == 'Admin') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  backgroundColor: Colors.grey[300],
                   content: Text('Connexion réussie!', style: Appwidget.styledetexte(
                       couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
                   ),)),
@@ -140,7 +142,7 @@ class AuthService {
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Erreur: Vous n\'êtes pas un Administrateur.')),
+              const SnackBar(content: Text('Identifiant Incorrect')),
             );
             await _auth.signOut();
           }
@@ -152,7 +154,9 @@ class AuthService {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
+        SnackBar(content: Text("Quelque chose s'est mal passé", style: Appwidget.styledetexte(
+          couleur: Colors.red
+        ),)),
       );
     }
   }
@@ -200,7 +204,7 @@ class AuthService {
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la déconnexion: ${e.toString()}')),
+        const SnackBar(content: Text('Erreur lors de la déconnexion')),
       );
     }
   }
