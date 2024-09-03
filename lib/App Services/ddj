@@ -1,10 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:projetsout/App%20Services/Recup%C3%A9ration%20des%20ID.dart';
-import 'package:projetsout/AppWidget.dart';
-import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Admin/choix%20du%20type%20de%20compte.dart';
-import '../../../App Services/Gestion Users.dart';
-import 'Ajout Pharmacies.dart';
+
 
 
 class UserManagementPage extends StatefulWidget {
@@ -17,9 +11,6 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
   late TabController _tabController;
   final IDRecup _idRecup = IDRecup();
   final UserManagementController _gestion = UserManagementController();
-  final FirebaseAuth _c = FirebaseAuth.instance;
-
-
   String? _adminName;
   late Future<List<Map<String, dynamic>>> _allUsersFuture;
   late Future<List<Map<String, dynamic>>> _pharmaciesFuture;
@@ -42,7 +33,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
 
   Future<void> _fetchUserData() async {
     // Assuming admin email is available or can be fetched similarly
-    String currentAdminEmail = _c.currentUser.toString();
+    String currentAdminEmail = 'admin@example.com'; // replace with actual logic to get admin email
 
     setState(() {
       _allUsersFuture = _gestion.listUsersExcludingAdmin(currentAdminEmail);
@@ -109,7 +100,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                   future: _allUsersFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: Appwidget.loading());
+                      return Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -123,18 +114,11 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                   future: _pharmaciesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: Appwidget.loading());
+                      return Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset("assets/img/page-not-found.png", height: 100,),
-                          SizedBox(height: 10,),
-                          const Text('Pas de Pharmacies Trouvées.'),
-                        ],
-                      ));
+                      return Center(child: Text('No pharmacies found.'));
                     } else {
                       return _buildUserList(context, snapshot.data!);
                     }
@@ -160,7 +144,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ChoixTypeCompte())),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PharmacyForm())),
         backgroundColor: Appwidget.customGreen,
         child: const Icon(Icons.add),
       ),
@@ -208,9 +192,9 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Users',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -225,7 +209,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
               rows: List.generate(users.length, (index) {
                 final user = users[index];
                 return DataRow(cells: [
-                  DataCell(Text(user['Nom'] ?? '')),
+                  DataCell(Text(user['Name'] ?? '')),
                   DataCell(Text(user['Email'] ?? '')),
                   DataCell(Text(user['Rôle'] ?? '')),
                   DataCell(Text(user['Statut'] ?? '')),
@@ -332,4 +316,3 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     );
   }
 }
-

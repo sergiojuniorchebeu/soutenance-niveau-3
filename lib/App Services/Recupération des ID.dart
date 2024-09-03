@@ -18,7 +18,7 @@ class IDRecup {
     }
     return null;
   }
-
+  //Admin Name
   Future<String?> getAdminName() async {
     User? user = _auth.currentUser;
 
@@ -30,8 +30,8 @@ class IDRecup {
             .get();
 
         if (userDoc.exists) {
-          if (userDoc['role'] == 'admin') {
-            return userDoc['name'];
+          if (userDoc['Rôle'] == 'Admin') {
+            return userDoc['Nom'];
           }
         }
       } catch (e) {
