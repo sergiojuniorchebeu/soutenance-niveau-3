@@ -11,7 +11,6 @@ class UserManagementPage extends StatefulWidget {
   @override
   _UserManagementPageState createState() => _UserManagementPageState();
 }
-
 class _UserManagementPageState extends State<UserManagementPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final IDRecup _idRecup = IDRecup();
@@ -20,8 +19,14 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
 
   String? _adminName;
   late Future<List<Map<String, dynamic>>> _allUsersFuture;
-  late Future<List<Map<String, dynamic>>> _pharmaciesFuture;
-  late Future<List<Map<String, dynamic>>> _patientsFuture;
+  Future<List<Map<String, dynamic>>> _pharmaciesFuture = Future.value([]);
+  Future<List<Map<String, dynamic>>> _patientsFuture = Future.value([]);
+
+  List<Map<String, dynamic>> _allUsers = [];
+  List<Map<String, dynamic>> _filteredUsers = [];
+  String _searchQuery = '';
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -29,6 +34,12 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     _tabController = TabController(length: 3, vsync: this);
     _fetchAdminName();
     _fetchUserData();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+        _filterUsers();
+      });
+    });
   }
 
   Future<void> _fetchAdminName() async {
@@ -42,11 +53,35 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     String currentAdminEmail = _auth.currentUser?.email ?? '';
     print('Current Admin Email: $currentAdminEmail');
 
-    setState(() {
-      _allUsersFuture = _gestion.listUsersExcludingAdmin(currentAdminEmail);
-      _pharmaciesFuture = _gestion.listPharmacies();
-      _patientsFuture = _gestion.listPatients();
-    });
+    try {
+      List<Map<String, dynamic>> allUsers = await _gestion.listUsersExcludingAdmin(currentAdminEmail);
+      List<Map<String, dynamic>> pharmacies = await _gestion.listPharmacies();
+      List<Map<String, dynamic>> patients = await _gestion.listPatients();
+
+      setState(() {
+        _allUsers = allUsers;
+        _filteredUsers = allUsers; // Initially, show all users
+        _pharmaciesFuture = Future.value(pharmacies);
+        _patientsFuture = Future.value(patients);
+      });
+    } catch (e) {
+      print('Error fetching user data: $e');
+      setState(() {
+        _pharmaciesFuture = Future.value([]);
+        _patientsFuture = Future.value([]);
+      });
+    }
+  }
+
+  void _filterUsers() {
+    if (_searchQuery.isEmpty) {
+      _filteredUsers = _allUsers;
+    } else {
+      _filteredUsers = _allUsers.where((user) {
+        return user['Nom']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false ||
+            user['Email']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
+      }).toList();
+    }
   }
 
   @override
@@ -57,8 +92,9 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
           SizedBox(
             width: 300,
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search...',
+                hintText: 'Rechercher...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -103,20 +139,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
             child: TabBarView(
               controller: _tabController,
               children: [
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _allUsersFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: Appwidget.loading());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(child: Text('No users found.'));
-                    } else {
-                      return _buildUserList(context, snapshot.data!);
-                    }
-                  },
-                ),
+                _buildUserList(context, _filteredUsers),
                 FutureBuilder<List<Map<String, dynamic>>>(
                   future: _pharmaciesFuture,
                   builder: (context, snapshot) {
@@ -229,7 +252,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => _showEditUserDialog(
                           context,
-                          user['UID'] ?? '',
+                          user['UID'] ?? '', // Passer l'ID correct ici
                           user['Nom'] ?? '',
                           user['Statut'] ?? '',
                         ),
@@ -238,7 +261,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _showDeleteConfirmation(
                           context,
-                          user['UID'] ?? '',
+                          user['UID'] ?? '', // Passer l'ID correct ici
                           user['Email'] ?? '',
                         ),
                       ),
@@ -252,7 +275,6 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
       ),
     );
   }
-
 
   void _showEditUserDialog(BuildContext context, String userId, String userName, String currentStatus) {
     String newStatus = currentStatus == 'actif' ? 'inactif' : 'actif';
@@ -354,5 +376,4 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
       },
     );
   }
-
 }

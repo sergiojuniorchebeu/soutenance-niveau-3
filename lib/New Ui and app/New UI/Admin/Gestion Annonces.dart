@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
+import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Admin/Ajouter%20Annonces.dart';
 
 class AnnouncementManagementPage extends StatefulWidget {
   const AnnouncementManagementPage({super.key});
@@ -11,77 +13,9 @@ class AnnouncementManagementPage extends StatefulWidget {
 
 class _AnnouncementManagementPageState
     extends State<AnnouncementManagementPage> {
-  final List<Map<String, String>> _announcements = [
-    {"title": "System Maintenance", "content": "Scheduled maintenance on 01/09"},
-    {"title": "New Features", "content": "Check out our latest updates."},
-  ];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _showAddAnnouncementDialog() {
-    _showAnnouncementDialog(context, isEdit: false);
-  }
-
-  void _showEditAnnouncementDialog(int index) {
-    _showAnnouncementDialog(context, isEdit: true, index: index);
-  }
-
-  void _showAnnouncementDialog(BuildContext context,
-      {bool isEdit = false, int? index}) {
-    final titleController = TextEditingController(
-        text: isEdit ? _announcements[index!]['title'] : '');
-    final contentController = TextEditingController(
-        text: isEdit ? _announcements[index!]['content'] : '');
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isEdit ? 'Edit Announcement' : 'Add Announcement'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: contentController,
-                decoration: InputDecoration(labelText: 'Content'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text(isEdit ? 'Save' : 'Add'),
-              onPressed: () {
-                setState(() {
-                  if (isEdit) {
-                    _announcements[index!] = {
-                      "title": titleController.text,
-                      "content": contentController.text
-                    };
-                  } else {
-                    _announcements.add({
-                      "title": titleController.text,
-                      "content": contentController.text
-                    });
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteConfirmationDialog(int index) {
+  void _showDeleteConfirmationDialog(String docId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -97,10 +31,17 @@ class _AnnouncementManagementPageState
             ),
             ElevatedButton(
               child: Text('Delete'),
-              onPressed: () {
-                setState(() {
-                  _announcements.removeAt(index);
-                });
+              onPressed: () async {
+                try {
+                  await _firestore.collection('annonces').doc(docId).delete();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Announcement deleted')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting announcement: $e')),
+                  );
+                }
                 Navigator.of(context).pop();
               },
             ),
@@ -113,62 +54,68 @@ class _AnnouncementManagementPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*appBar: AppBar(
-        title: Text('Announcement Management'),
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
-      ),*/
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Annonces',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _announcements.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      title: Text(_announcements[index]['title']!),
-                      subtitle: Text(_announcements[index]['content']!),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () =>
-                                _showEditAnnouncementDialog(index),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: _firestore.collection('annonces').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child:Appwidget.loading());
+            }
+
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Center(child: Text('No announcements available'));
+            }
+
+            final announcements = snapshot.data!.docs;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Annonces',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: announcements.length,
+                    itemBuilder: (context, index) {
+                      final doc = announcements[index];
+                      final title = doc['titre'] ?? 'No Title';
+                      final content = doc['description'] ?? 'No Content';
+                      final docId = doc.id;
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          title: Text(title),
+                          subtitle: Text(content),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _showDeleteConfirmationDialog(docId),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () =>
-                                _showDeleteConfirmationDialog(index),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddAnnouncementDialog,
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AjoutAnnonces()),
+        ),
+        backgroundColor: Appwidget.customGreen, // Ensure `customGreen` is defined
         child: Icon(Icons.add),
-        backgroundColor: Appwidget.customGreen,
       ),
     );
   }

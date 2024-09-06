@@ -15,11 +15,16 @@ class UserManagementController {
     }).toList();
 
     List<Map<String, dynamic>> userData = users.map((doc) {
-      return doc.data() as Map<String, dynamic>;
+      // Inclure l'ID du document dans les données retournées
+      return {
+        ...doc.data() as Map<String, dynamic>,
+        'UID': doc.id // Assurez-vous que l'ID est inclus
+      };
     }).toList();
 
     return userData;
   }
+
 
   // Function to list users with role "Patient"
   Future<List<Map<String, dynamic>>> listPatients() async {
