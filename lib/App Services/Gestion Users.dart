@@ -7,7 +7,6 @@ class UserManagementController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Function to list all users except the current admin
   Future<List<Map<String, dynamic>>> listUsersExcludingAdmin(String currentAdminEmail) async {
     QuerySnapshot querySnapshot = await _firestore.collection('users').get();
 
@@ -50,14 +49,45 @@ class UserManagementController {
     return pharmacyData;
   }
 
-  // Function to delete a user account
-  Future<void> deleteUser(String userId) async {
-    await _firestore.collection('users').doc(userId).delete();
+  // Function to verify admin password
+  Future<bool> verifyAdminPassword(String password) async {
+    User? currentUser = _auth.currentUser;
+
+    if (currentUser != null) {
+      try {
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: currentUser.email!,
+          password: password,
+        );
+        await currentUser.reauthenticateWithCredential(credential);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
   }
 
-  // Function to deactivate a user account
-  Future<void> deactivateUser(String userId) async {
-    await _firestore.collection('users').doc(userId).update({'Statut': 'inactif'});
+  // Function to delete a user account
+  Future<void> deleteUser(String userId, String adminPassword) async {
+    if (await verifyAdminPassword(adminPassword)) {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        String email = userDoc['Email'];
+        if (email != 'sergiojuniorchebeu@gmail.com') {
+          await _firestore.collection('users').doc(userId).delete();
+        } else {
+          throw Exception('This user cannot be deleted.');
+        }
+      }
+    } else {
+      throw Exception('Incorrect password.');
+    }
+  }
+
+  // Function to deactivate/activate a user account
+  Future<void> toggleUserStatus(String userId, String newStatus) async {
+    await _firestore.collection('users').doc(userId).update({'Statut': newStatus});
   }
 
   // Function to register a new pharmacy
@@ -93,6 +123,102 @@ class UserManagementController {
           'Région': region,
           'Ville': city,
           'Rôle': 'Pharmacie',
+          'Date de création': FieldValue.serverTimestamp(),
+          'Statut': 'actif',
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Compte créé avec succès!',
+              style: TextStyle(color: Colors.green),
+            ),
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur, veuillez réessayer')),
+      );
+    }
+  }
+
+  // Function to register an administrator
+  Future<void> registerAdminWithEmailAndPassword({
+    required String name,
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Création du compte en cours...')),
+      );
+
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      User? user = userCredential.user;
+
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).set({
+          'Nom': name,
+          'Email': email,
+          'Rôle': 'Admin',
+          'Date de création': FieldValue.serverTimestamp(),
+          'Statut': 'actif',
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Compte créé avec succès!',
+              style: TextStyle(color: Colors.green),
+            ),
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur, veuillez réessayer')),
+      );
+    }
+  }
+
+  // Function to register a new user
+  Future<void> registerUserWithEmailAndPassword({
+    required String name,
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Création du compte en cours...')),
+      );
+
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      User? user = userCredential.user;
+
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).set({
+          'Nom': name,
+          'Email': email,
+          'Rôle': 'Patient',
           'Date de création': FieldValue.serverTimestamp(),
           'Statut': 'actif',
         });

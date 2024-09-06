@@ -4,8 +4,6 @@ import 'package:projetsout/App%20Services/Recup%C3%A9ration%20des%20ID.dart';
 import 'package:projetsout/AppWidget.dart';
 import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Admin/choix%20du%20type%20de%20compte.dart';
 import '../../../App Services/Gestion Users.dart';
-import 'Ajout Pharmacies.dart';
-
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -13,12 +11,12 @@ class UserManagementPage extends StatefulWidget {
   @override
   _UserManagementPageState createState() => _UserManagementPageState();
 }
+
 class _UserManagementPageState extends State<UserManagementPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final IDRecup _idRecup = IDRecup();
   final UserManagementController _gestion = UserManagementController();
-  final FirebaseAuth _c = FirebaseAuth.instance;
-
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? _adminName;
   late Future<List<Map<String, dynamic>>> _allUsersFuture;
@@ -41,8 +39,8 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
   }
 
   Future<void> _fetchUserData() async {
-    // Assuming admin email is available or can be fetched similarly
-    String currentAdminEmail = _c.currentUser.toString();
+    String currentAdminEmail = _auth.currentUser?.email ?? '';
+    print('Current Admin Email: $currentAdminEmail');
 
     setState(() {
       _allUsersFuture = _gestion.listUsersExcludingAdmin(currentAdminEmail);
@@ -130,8 +128,8 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                       return Center(child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset("assets/img/page-not-found.png", height: 100,),
-                          SizedBox(height: 10,),
+                          Image.asset("assets/img/page-not-found.png", height: 100),
+                          const SizedBox(height: 10),
                           const Text('Pas de Pharmacies Trouvées.'),
                         ],
                       ));
@@ -144,7 +142,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
                   future: _patientsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
+                      return Center(child: Appwidget.loading());
                     } else if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -205,60 +203,71 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
   Widget _buildUserList(BuildContext context, List<Map<String, dynamic>> users) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Users',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: DataTable(
-              columns: const [
-                DataColumn(label: Text('Name')),
-                DataColumn(label: Text('Email')),
-                DataColumn(label: Text('Role')),
-                DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Actions')),
-              ],
-              rows: List.generate(users.length, (index) {
-                final user = users[index];
-                return DataRow(cells: [
-                  DataCell(Text(user['Nom'] ?? '')),
-                  DataCell(Text(user['Email'] ?? '')),
-                  DataCell(Text(user['Rôle'] ?? '')),
-                  DataCell(Text(user['Statut'] ?? '')),
-                  DataCell(
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => _showEditUserDialog(context, user['Name'] ?? ''),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columns: const [
+              DataColumn(label: Text('Name')),
+              DataColumn(label: Text('Email')),
+              DataColumn(label: Text('Role')),
+              DataColumn(label: Text('Status')),
+              DataColumn(label: Text('Actions')),
+            ],
+            rows: List.generate(users.length, (index) {
+              final user = users[index];
+              return DataRow(cells: [
+                DataCell(Text(user['Nom'] ?? '')),
+                DataCell(Text(user['Email'] ?? '')),
+                DataCell(Text(user['Rôle'] ?? '')),
+                DataCell(Text(user['Statut'] ?? '')),
+                DataCell(
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showEditUserDialog(
+                          context,
+                          user['UID'] ?? '',
+                          user['Nom'] ?? '',
+                          user['Statut'] ?? '',
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _showDeleteConfirmation(context, user['Email'] ?? ''),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _showDeleteConfirmation(
+                          context,
+                          user['UID'] ?? '',
+                          user['Email'] ?? '',
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ]);
-              }),
-            ),
+                ),
+              ]);
+            }),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  void _showEditUserDialog(BuildContext context, String userName) {
+
+  void _showEditUserDialog(BuildContext context, String userId, String userName, String currentStatus) {
+    String newStatus = currentStatus == 'actif' ? 'inactif' : 'actif';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Edit $userName'),
-          content: _buildUserForm(userName: userName),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Change status to: $newStatus'),
+            ],
+          ),
           actions: [
             TextButton(
               child: Text('Cancel'),
@@ -267,10 +276,24 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
               },
             ),
             ElevatedButton(
-              child: Text('Save Changes'),
-              onPressed: () {
-                // Edit user logic here
-                Navigator.of(context).pop();
+              child: const Text('Save Changes'),
+              onPressed: () async {
+                try {
+                  if (userId.isNotEmpty) {
+                    await _gestion.toggleUserStatus(userId, newStatus);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User status updated successfully.')),
+                    );
+                    Navigator.of(context).pop();
+                    _fetchUserData(); // Refresh data
+                  } else {
+                    throw Exception('Invalid User ID.');
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
               },
             ),
           ],
@@ -279,13 +302,25 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, String userEmail) {
+  void _showDeleteConfirmation(BuildContext context, String userId, String userEmail) {
+    TextEditingController passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Delete User'),
-          content: Text('Are you sure you want to delete user with email: $userEmail?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Are you sure you want to delete user with email: $userEmail?'),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Enter admin password'),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               child: Text('Cancel'),
@@ -295,9 +330,23 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
             ),
             ElevatedButton(
               child: Text('Delete'),
-              onPressed: () {
-                // Delete user logic here
-                Navigator.of(context).pop();
+              onPressed: () async {
+                try {
+                  if (userId.isNotEmpty) {
+                    await _gestion.deleteUser(userId, passwordController.text);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User deleted successfully.')),
+                    );
+                    Navigator.of(context).pop();
+                    _fetchUserData(); // Refresh data
+                  } else {
+                    throw Exception('Invalid User ID.');
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
               },
             ),
           ],
@@ -306,30 +355,4 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     );
   }
 
-  Widget _buildUserForm({String? userName}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextFormField(
-          decoration: InputDecoration(
-            labelText: 'Name',
-            hintText: userName ?? 'Enter user name',
-          ),
-        ),
-        TextFormField(
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            hintText: 'Enter user email',
-          ),
-        ),
-        const SizedBox(height: 16),
-        SwitchListTile(
-          title: const Text('Active'),
-          value: true, // Replace with actual status
-          onChanged: (bool value) {},
-        ),
-      ],
-    );
-  }
 }
-
