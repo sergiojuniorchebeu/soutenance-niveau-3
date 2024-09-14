@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
 
@@ -9,11 +11,52 @@ class PharmacyProfilePage extends StatefulWidget {
 }
 
 class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
-  String pharmacyName = "Pharmacie Santé Plus";
-  String city = "Yaoundé";
-  String longitude = "11.5167";
-  String latitude = "3.8667";
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  String pharmacyName = '';
+  String city = '';
+  String longitude = '';
+  String latitude = '';
+  String email = '';
+  String phoneNumber = '';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  // Fonction pour charger les données de profil depuis Firebase
+  void _loadProfileData() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      DocumentSnapshot userSnapshot =
+      await _firestore.collection('users').doc(currentUser.uid).get();
+
+      setState(() {
+        pharmacyName = userSnapshot['Nom'] ?? 'Sans nom';
+        city = userSnapshot['Ville'] ?? 'Sans ville';
+        longitude = userSnapshot['Longitude'] ?? '0.0';
+        latitude = userSnapshot['Latitude'] ?? '0.0';
+        email = currentUser.email ?? 'Email non disponible';
+        phoneNumber = userSnapshot['Téléphone'] ?? 'Téléphone non disponible';
+        isLoading = false;
+      });
+    }
+  }
+
+  // Fonction pour mettre à jour les données dans Firebase
+  void _updateField(String field, String newValue) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      await _firestore.collection('users').doc(currentUser.uid).update({field: newValue});
+      _loadProfileData();
+    }
+  }
+
+  // Fonction pour afficher une boîte de dialogue pour l'édition
   void _editField(String fieldName, String currentValue, Function(String) onSave) {
     final TextEditingController controller = TextEditingController(text: currentValue);
 
@@ -36,9 +79,10 @@ class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
                 Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(backgroundColor: Appwidget.customGreen),
-              child: Text('Enregistrer', style: Appwidget.styledetexte(
-                couleur: Colors.white, w: FontWeight.bold
-              ),),
+              child: Text(
+                'Enregistrer',
+                style: Appwidget.styledetexte(couleur: Colors.white, w: FontWeight.bold),
+              ),
             ),
           ],
         );
@@ -46,11 +90,24 @@ class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
     );
   }
 
+  // Fonction pour réinitialiser le mot de passe
+  void _resetPassword() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null && email.isNotEmpty) {
+      await _auth.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Un e-mail de réinitialisation a été envoyé à votre adresse.'),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Appwidget.appBar(),
-      body: Padding(
+      body: isLoading
+          ? Center(child: Appwidget.loading())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
@@ -65,29 +122,38 @@ class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
             ),
             const SizedBox(height: 16.0),
             _buildProfileItem('Nom de la Pharmacie', pharmacyName, (newValue) {
-              setState(() {
-                pharmacyName = newValue;
-              });
+              _updateField('nom', newValue);
             }),
             const SizedBox(height: 16.0),
             _buildProfileItem('Ville', city, (newValue) {
-              setState(() {
-                city = newValue;
-              });
+              _updateField('ville', newValue);
             }),
             const SizedBox(height: 16.0),
             _buildProfileItem('Longitude', longitude, (newValue) {
-              setState(() {
-                longitude = newValue;
-              });
+              _updateField('longitude', newValue);
             }),
             const SizedBox(height: 16.0),
             _buildProfileItem('Latitude', latitude, (newValue) {
-              setState(() {
-                latitude = newValue;
-              });
+              _updateField('latitude', newValue);
+            }),
+            const SizedBox(height: 16.0),
+            _buildProfileItem('Email', email, (_) {}),
+            const SizedBox(height: 16.0),
+            _buildProfileItem('Téléphone', phoneNumber, (newValue) {
+              _updateField('telephone', newValue);
             }),
             const SizedBox(height: 30.0),
+            ElevatedButton.icon(
+              onPressed: _resetPassword,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Appwidget.customGreen, padding: const EdgeInsets.all(12)),
+              icon: const Icon(Icons.lock_reset, color: Colors.white),
+              label: const Text(
+                'Réinitialiser le mot de passe',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
                 // Logique pour supprimer le compte
@@ -101,13 +167,16 @@ class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
     );
   }
 
+  // Widget pour afficher un élément du profil
   Widget _buildProfileItem(String label, String value, Function(String) onSave) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '$label : $value',
-          style: const TextStyle(fontSize: 18.0, color: Colors.black87),
+        Expanded(
+          child: Text(
+            '$label : $value',
+            style: const TextStyle(fontSize: 18.0, color: Colors.black87),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.edit, color: Appwidget.customGreen),

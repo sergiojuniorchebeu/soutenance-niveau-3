@@ -30,7 +30,7 @@ class _AnnouncementManagementPageState
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () async {
                 try {
                   await _firestore.collection('annonces').doc(docId).delete();

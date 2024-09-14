@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/App%20Services/Auth%20Services.dart';
@@ -190,7 +191,7 @@ class DashboardPatient extends StatelessWidget {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18.0),
                       borderSide:
-                          const BorderSide(color: Appwidget.customGreen),
+                      const BorderSide(color: Appwidget.customGreen),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                         vertical: 10.0, horizontal: 20.0),
@@ -199,6 +200,7 @@ class DashboardPatient extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Section Pharmacies Proches
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -223,34 +225,38 @@ class DashboardPatient extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: ListView(
-                  children: const [
-                    MedicationTile(
-                      name: 'Pharmacie du soleil',
-                      patient: 'Yaoundé',
-                      date: 'July, 10 2024',
-                    ),
-                    MedicationTile(
-                      name: 'Penicillin',
-                      patient: 'John Doe',
-                      date: 'July, 10 2024',
-                    ),
-                    MedicationTile(
-                      name: 'Mebendazold',
-                      patient: 'India Freight',
-                      date: 'July, 10 2024',
-                    ),
-                    MedicationTile(
-                      name: 'Paracetamol',
-                      patient: 'Gregoria George',
-                      date: 'July, 10 2024',
-                    ),
-                  ],
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .where('Rôle', isEqualTo: 'Pharmacie')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    List<DocumentSnapshot> pharmacies = snapshot.data!.docs;
+                    if (pharmacies.length > 5) {
+                      pharmacies.shuffle(); // Mélange les pharmacies
+                      pharmacies = pharmacies.sublist(0, 4);
+                    }
+
+                    return ListView.builder(
+                      itemCount: pharmacies.length,
+                      itemBuilder: (context, index) {
+                        var pharmacie = pharmacies[index];
+                        return MedicationTile(
+                          name: pharmacie['Nom'] ?? 'Pharmacie sans nom',
+                          patient: pharmacie['Ville'] ?? 'Ville inconnue',
+                          date: pharmacie['Région'] ?? 'Région inconnue',
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
-              const SizedBox(
-                height: 30,
-              ),
+              const SizedBox(height: 30),
+              // Section Pharmacies De Gardes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -275,24 +281,34 @@ class DashboardPatient extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: ListView(
-                  children: const [
-                    MedicationTile(
-                      name: 'Paracetamol',
-                      patient: 'John Doe',
-                      date: 'July, 14 2024',
-                    ),
-                    MedicationTile(
-                      name: 'Penicillin',
-                      patient: 'John Doe',
-                      date: 'July, 18 2024',
-                    ),
-                    MedicationTile(
-                      name: 'Penicillin',
-                      patient: 'John Doe',
-                      date: 'July, 18 2024',
-                    ),
-                  ],
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .where('enGarde', isEqualTo: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    List<DocumentSnapshot> pharmaciesDeGarde = snapshot.data!.docs;
+                    if (pharmaciesDeGarde.length > 5) {
+                      pharmaciesDeGarde.shuffle(); // Mélange les pharmacies
+                      pharmaciesDeGarde = pharmaciesDeGarde.sublist(0, 5);
+                    }
+
+                    return ListView.builder(
+                      itemCount: pharmaciesDeGarde.length,
+                      itemBuilder: (context, index) {
+                        var pharmacie = pharmaciesDeGarde[index];
+                        return MedicationTile(
+                          name: pharmacie['Nom'] ?? 'Pharmacie sans nom',
+                          patient: pharmacie['Ville'] ?? 'Ville inconnue',
+                          date: pharmacie['Région'] ?? 'Région inconnue',
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],

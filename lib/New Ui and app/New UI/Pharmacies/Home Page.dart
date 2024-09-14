@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:projetsout/AppWidget.dart';
@@ -5,6 +7,7 @@ import 'Assistance IA.dart';
 import 'Gestion Commande.dart';
 import 'Gestion liste produit.dart';
 import 'Parametre.dart';
+import 'Statut de garde.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -21,10 +24,10 @@ class DashboardPage extends StatelessWidget {
             const VisitorChart(),
             Expanded(
               child: GridView.count(
-                crossAxisCount: 4,
+                crossAxisCount: 5,
                 crossAxisSpacing: 16.0,
                 mainAxisSpacing: 16.0,
-                childAspectRatio: 1, // Adjust the aspect ratio to reduce card height
+                childAspectRatio: 1,
                 children: <Widget>[
                   DashboardCard(
                     icon: Icons.list,
@@ -35,9 +38,17 @@ class DashboardPage extends StatelessWidget {
                   ),
                   DashboardCard(
                     icon: Icons.shopping_cart,
-                    title: 'Liste des Commandes',
+                    title: 'Liste des Reservations',
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>const CommandeManagementPage()));
+                    },
+                  ),
+                  DashboardCard(
+
+                    icon: Icons.hourglass_bottom,
+                    title: 'Paramatre de garde',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>const GardePharmaciePage()));
                     },
                   ),
                   DashboardCard(
@@ -68,45 +79,78 @@ class DashboardPage extends StatelessWidget {
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
 
+  Future<Map<String, dynamic>> _getPharmacyInfo() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (userDoc.exists) {
+        return userDoc.data() as Map<String, dynamic>;
+      }
+    }
+    return {};
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      children: <Widget>[
-        CircleAvatar(
-          radius: 50,
-          backgroundColor:Appwidget.customGreen,
-          child: Icon(
-            Icons.person,
-            size: 50,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(width: 16.0),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pharmacie Santé Plus',
-              style: TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getPharmacyInfo(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Appwidget.loading();
+        } else if (snapshot.hasError) {
+          return const Text('Erreur de chargement');
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          final pharmacyData = snapshot.data!;
+          final String pharmacyName = pharmacyData['Nom'] ?? 'Nom inconnu';
+          final String city = pharmacyData['Ville'] ?? 'Ville inconnue';
+          final String region = pharmacyData['Région'] ?? 'Région inconnue';
+
+          return Row(
+            children: <Widget>[
+              const CircleAvatar(
+                radius: 50,
+                backgroundColor: Appwidget.customGreen,
+                child: Icon(
+                  Icons.person,
+                  size: 50,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            SizedBox(height: 4.0),
-            Text(
-              'Yaoundé, Cameroun',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey,
+              const SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pharmacyName,
+                    style: const TextStyle(
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4.0),
+                  Text(
+                    '$city, $region',
+                    style: const TextStyle(
+                      fontSize: 16.0,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          );
+        } else {
+          return const Text('Pharmacie non trouvée');
+        }
+      },
     );
   }
 }
+
 
 class DashboardCard extends StatelessWidget {
   final IconData icon;

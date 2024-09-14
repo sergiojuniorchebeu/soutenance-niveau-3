@@ -5,6 +5,7 @@ import 'package:projetsout/AppWidget.dart';
 import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Patient/Landing%20Page.dart';
 import '../New Ui and app/New UI/Admin/HomePage.dart';
 import '../New Ui and app/New UI/Patient/Screen Manage Patient.dart';
+import '../New Ui and app/New UI/Pharmacies/Home Page.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -129,16 +130,32 @@ class AuthService {
 
         if (userDoc.exists) {
           String role = userDoc.get('Rôle');
+
           if (role == 'Admin') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Connexion réussie!', style: Appwidget.styledetexte(
-                      couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
-                  ),)),
+                content: Text('Connexion réussie!',
+                    style: Appwidget.styledetexte(
+                        couleur: Appwidget .customGreen, taille: 14, w: FontWeight.bold
+                    )),
+              ),
             );
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            );
+          } else if (role == 'Pharmacie') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Connexion réussie!',
+                    style: Appwidget.styledetexte(
+                        couleur: Appwidget.customGreen, taille: 14, w: FontWeight.bold
+                    )),
+              ),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -154,12 +171,14 @@ class AuthService {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Quelque chose s'est mal passé", style: Appwidget.styledetexte(
-          couleur: Colors.red
-        ),)),
+        SnackBar(content: Text("Quelque chose s'est mal passé",
+            style: Appwidget.styledetexte(
+              couleur: Colors.red,
+            ))),
       );
     }
   }
+
 
   bool isPasswordVisible = false;
   void togglePasswordVisibility() {

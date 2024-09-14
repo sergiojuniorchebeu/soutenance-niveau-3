@@ -43,7 +43,7 @@ class _LoginAdminState extends State<LoginAdmin> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Admin Login',
+                  'Pharmacare Desktop',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),

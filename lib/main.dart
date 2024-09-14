@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:projetsout/firebase_options.dart';
 import 'AppWidget.dart';
 import 'New Ui and app/New UI/Admin/Landing Page Admin.dart';
+import 'New Ui and app/New UI/Landing Page.dart';
+import 'New Ui and app/New UI/Patient/Landing Page.dart';
 
  Future <void> main() async{
    WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +42,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) =>  const LoginAdmin(),
+        '/': (context) =>  const LandingUserPage(),
        //'home' : (context)=> HomePage()
       },
     );

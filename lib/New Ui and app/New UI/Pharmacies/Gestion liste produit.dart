@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projetsout/AppWidget.dart';
+import 'package:projetsout/New%20Ui%20and%20app/New%20UI/Pharmacies/Ajout%20medicament.dart';
+import 'Details medicament.dart';
 
 class MedicamentManagementPage extends StatefulWidget {
   const MedicamentManagementPage({super.key});
@@ -9,53 +13,44 @@ class MedicamentManagementPage extends StatefulWidget {
 }
 
 class _MedicamentManagementPageState extends State<MedicamentManagementPage> {
-  List<Medicament> medicaments = [
-    Medicament('Paracétamol', true),
-    Medicament('Ibuprofène', false),
-    Medicament('Amoxicilline', true),
-    Medicament('Efféralgant', false),
-    Medicament('Malacure', false),
-    Medicament('Bactrim', true),
-    Medicament('MixaGrip', true),
-    Medicament('Doliprane', true),
-    Medicament('Amoxicilline', true),
-  ];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void toggleActivation(int index) {
-    setState(() {
-      medicaments[index].isActive = !medicaments[index].isActive;
-    });
+  Stream<QuerySnapshot> getMedicamentStream() {
+    String currentUserId = _auth.currentUser!.uid;
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .collection('liste des produits')
+        .snapshots();
   }
 
-  void addMedicament() {
+  void _toggleActivation(String medicamentId, bool currentStatus) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        String newMedicamentName = '';
         return AlertDialog(
-          title: const Text('Ajouter un Médicament'),
-          content: TextField(
-            onChanged: (value) {
-              newMedicamentName = value;
-            },
-            decoration: const InputDecoration(hintText: "Nom du Médicament"),
-          ),
+          title: Text(currentStatus ? "Désactiver le médicament ?" : "Activer le médicament ?"),
+          content: Text(currentStatus
+              ? "Voulez-vous vraiment désactiver ce médicament ?"
+              : "Voulez-vous vraiment activer ce médicament ?"),
           actions: <Widget>[
             TextButton(
-              child: const Text('Annuler'),
+              child: const Text("Annuler"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Ajouter'),
+              child: const Text("Confirmer"),
               onPressed: () {
-                if (newMedicamentName.isNotEmpty) {
-                  setState(() {
-                    medicaments.add(Medicament(newMedicamentName, true));
-                  });
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(_auth.currentUser!.uid)
+                    .collection('liste des produits')
+                    .doc(medicamentId)
+                    .update({'isActive': !currentStatus}).then((_) {
                   Navigator.of(context).pop();
-                }
+                });
               },
             ),
           ],
@@ -64,10 +59,37 @@ class _MedicamentManagementPageState extends State<MedicamentManagementPage> {
     );
   }
 
-  void removeMedicament(int index) {
-    setState(() {
-      medicaments.removeAt(index);
-    });
+  void _deleteMedicament(String medicamentId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Supprimer le médicament"),
+          content: const Text("Êtes-vous sûr de vouloir supprimer ce médicament ? Cette action est irréversible."),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Annuler"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Supprimer"),
+              onPressed: () {
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(_auth.currentUser!.uid)
+                    .collection('liste des produits')
+                    .doc(medicamentId)
+                    .delete().then((_) {
+                  Navigator.of(context).pop();
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -84,31 +106,62 @@ class _MedicamentManagementPageState extends State<MedicamentManagementPage> {
             ),
             const SizedBox(height: 16.0),
             Expanded(
-              child: ListView.builder(
-                itemCount: medicaments.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(medicaments[index].name),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Switch(
-                          value: medicaments[index].isActive,
-                          onChanged: (value) => toggleActivation(index),
-                          activeColor: Appwidget.customGreen,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: getMedicamentStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text('Aucun médicament trouvé.'));
+                  }
+
+                  List<QueryDocumentSnapshot> documents = snapshot.data!.docs;
+                  return ListView.builder(
+                    itemCount: documents.length,
+                    itemBuilder: (context, index) {
+                      var medicament = documents[index];
+                      return ListTile(
+                        title: Text(medicament['Nom Commercial'] ?? 'Sans nom'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Switch(
+                              value: medicament['isActive'] ?? true,
+                              onChanged: (value) {
+                                _toggleActivation(medicament.id, medicament['isActive'] ?? true);
+                              },
+                              activeColor: Appwidget.customGreen,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                _deleteMedicament(medicament.id);
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => removeMedicament(index),
-                        ),
-                      ],
-                    ),
+                        onTap: () {
+                          // Navigation vers la page de détails avec les informations du médicament
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MedicamentDetailsPage(
+                                medicamentData: medicament.data() as Map<String, dynamic>,
+                              ),
+                            ),
+                          );
+                        },
+                        leading: Image.asset('assets/img/boite-a-pilules.png'),
+                      );
+                    },
                   );
                 },
               ),
             ),
             ElevatedButton.icon(
-              onPressed: addMedicament,
+              onPressed: () => Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const AjouterProduit())),
               icon: const Icon(
                 Icons.add,
                 size: 24.0, // Taille de l'icône
@@ -122,8 +175,9 @@ class _MedicamentManagementPageState extends State<MedicamentManagementPage> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Appwidget.customGreen,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0), // Espacement interne
+                foregroundColor: Colors.white,
+                backgroundColor: Appwidget.customGreen,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30.0), // Coins arrondis
                 ),
@@ -131,17 +185,9 @@ class _MedicamentManagementPageState extends State<MedicamentManagementPage> {
                 shadowColor: Colors.black.withOpacity(0.3), // Couleur de l'ombre
               ),
             )
-
           ],
         ),
       ),
     );
   }
-}
-
-class Medicament {
-  String name;
-  bool isActive;
-
-  Medicament(this.name, this.isActive);
 }

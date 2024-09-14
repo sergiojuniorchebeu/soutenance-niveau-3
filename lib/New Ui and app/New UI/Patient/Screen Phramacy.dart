@@ -15,8 +15,8 @@ class _NavBarPharmacyState extends State<NavBarPharmacy> with SingleTickerProvid
   late TabController _tabController;
 
   final List<Widget> _screens = [
-    ListePharmacies(),
-    PharmaciesDegarde(),
+    const ListePharmacies(),
+    const PharmaciesDeGardePage(),
   ];
 
   @override
